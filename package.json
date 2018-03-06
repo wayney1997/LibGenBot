@@ -1,0 +1,13 @@
+{
+  "name": "libgenbot",
+  "version": "1.0.0",
+  "description": "cool and good but not cool neither good",
+  "main": "bot.js",
+  "author": "QED_Misaka_chan",
+  "dependencies": {
+    "discord.io": "github:woor/discord.io#gateway_v6",
+    "discord.js": "^11.3.1",
+    "libgen": "^1.0.0",
+    "winston": "^2.4.0"
+  }
+}
