@@ -15,7 +15,7 @@ logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, { colorize: true });
 logger.level = 'debug';
 
-bot.on('ready', function (evt) {
+bot.on('ready', () => {
     logger.info(`Connected as ${bot.user.username}`);
 });
 
@@ -26,8 +26,10 @@ bot.on("message", async (message) => {
 
     if (!message.content.startsWith(auth.prefix)) return;
 
-    const args = message.content.slice(prefix.length).trim().split(/ +/g);
-    const command = args.shift().toLowerCase();
+    const msg = message.content.slice(prefix.length);
+    const args = msg.split(' ').slice(1).join(' ');
+
+    const command = msg.split(' ')[0].trim();
 
     if (command === 'help') {
         logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
@@ -63,7 +65,7 @@ bot.on("message", async (message) => {
     if (command === 'get') {
         const options = {
             mirror: 'http://gen.lib.rus.ec',
-            query: args[0],
+            query: args,
             count: 3,
             sort_by: 'year',
             reverse: true
