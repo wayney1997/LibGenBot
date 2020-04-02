@@ -32,13 +32,15 @@ bot.on("message", async (message) => {
     const command = msg.split(' ')[0].trim();
 
     if (command === 'help') {
-        logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
+        const { username, id } = message.author;
+        console.log(`userName : ${username} (${id}) used ${command}`);
         message.channel.send('work in progress');
         return;
     }
 
     if (command === 'random') {
-        logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
+        const { username, id } = message.author;
+        console.log(`userName : ${username} (${id}) used ${command}`);
 
         libgen.random.text(1, (err, data) => {
             if (err) return err;
@@ -63,6 +65,9 @@ bot.on("message", async (message) => {
     }
 
     if (command === 'get') {
+        const { username, id } = message.author;
+        console.log(`userName : ${username} (${id}) used ${command}`);
+        
         const options = {
             mirror: 'http://gen.lib.rus.ec',
             query: args,
