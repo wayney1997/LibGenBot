@@ -1,145 +1,91 @@
-﻿const Discord = require('discord.js');
-const bot = new Discord.Client();
-//Discord bot as a new client
-var logger = require('winston');
-//logger
-const fs = require("fs");
-const libgen = require('libgen');
-var auth = require('./auth.json');
+﻿const { Client, MessageEmbed } = require('discord.js');
+const bot = new Client();
 
-var opts = {
-    count: 1,
-    mirror: 'http://gen.lib.rus.ec'
-};
+//Discord bot as a new client
+const logger = require('winston');
+
+//logger
+const libgen = require('libgen');
+const auth = require('./auth.json');
+
+const mirror = 'http://gen.lib.rus.ec';
 
 //logger configuration
 logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {
-    colorize: true
-});
+logger.add(logger.transports.Console, { colorize: true });
 logger.level = 'debug';
 
 bot.on('ready', function (evt) {
-    logger.info('Connected');
-    logger.info('Logged in as: ');
-    logger.info(bot.user.username + ' - (' + bot.user.id + ')');
+    logger.info(`Connected as ${bot.user.username}`);
 });
 
-//bot configuration and logging in
-bot.on('ready', function() {
-    bot.user.setActivity("nLab");
-})
 bot.login(auth.token);
 
-bot.on("message", (message) => {
-
+bot.on("message", async (message) => {
     const prefix = auth.prefix;
+
+    if (!message.content.startsWith(auth.prefix)) return;
 
     const args = message.content.slice(prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-    if (!message.content.startsWith(auth.prefix)) return;
-
-    if (message.content.startsWith(auth.prefix + command)) {
-
-       // logger.info("command : " + command + " args[0] : " + args[0] + " args[1] : " + args[1]); //for test
-        switch (command) {
-            
-        /* help
-        // v 1.0.0 nothing yet
-        */
-            case "help": {
-
-                logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
-                message.channel.send('work in progress');
-                return;
-
-            }
-            
-        /* prefix configuration 
-        // v 1.0.0 - somehow authorization fails. Still works but needs authorization.
-        // -> problem solved : not UserName use UserID , 
-        */
-            case "prefix": {
-             
-             logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
-
-             if (message.author.id !== auth.authID) 
-                 message.channel.send('Authorization needed.')
-             logger.warn('Unauthorized approach : ' + message.author.username + ' - ( '  + message.author.id + ')');
-             return;
-
-            let newPrefix = args[0];
-            auth.prefix = newPrefix;
-
-            fs.writeFile("./auth.json", JSON.stringify(auth), (err) => console.error);
-            logger.info('Prefix changed to : ' + auth.prefix);
-            }
-
-        /* random book grabbing function
-        // v 1.0.0 - no argument values, just random text
-        //
-        */
-            case "random": {
-
-               logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
-
-               if (args[0] === undefined) {
-                   opts.count = 1;
-                   //logger.info("somebody used random with 0 args");
-               }
-
-               if (args[0] !== undefined) {
-                   opts.count = args[0];
-                   //logger.info("somebody used random with args : " + opts.count);
-               }
-
-            libgen.random.text(opts, (err, data) => {
-                if (err)
-                    return (err);
-                
-                let n = data.length;
-                message.channel.send(n + ' random text(s)! :) ' + '<@' + message.author.id + '>' + '\n');
-
-                while (n--) {
-                    //message.channel.send('**Book #' + (data.length-n+1) + '**');
-                    //message.channel.send('Title: ' + data[n].title + '\n');
-                    //message.channel.send('Author: ' + data[n].author + '\n');
-                    //message.channel.send('Download: ' + 'http://gen.lib.rus.ec/book/index.php?md5=' + data[n].md5.toLowerCase() + '\n');
-                    message.channel.send({
-                        embed: {
-                            color: 3447003,
-                            author: {
-                                name: bot.user.username,
-                                icon_url: bot.user.avatarURL
-                            },
-                            title: "**Book #" + (data.length - n) + "**",
-                            fields: [{
-                                name: "Title",
-                                value: data[n].title
-                            },
-                            {
-                                name: "Author",
-                                value: data[n].author
-                            },
-                            {
-                                name: "Download",
-                                value: 'http://gen.lib.rus.ec/book/index.php?md5=' + data[n].md5.toLowerCase()
-                            }
-                            ],
-                            timestamp: new Date(),
-                            footer: {
-                                icon_url: bot.user.avatarURL,
-                                text: "© LibGenBot"
-                            }
-                        }
-
-                    }
-                        );
-                }
-
-            })
-        }
+    if (command === 'help') {
+        logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
+        message.channel.send('work in progress');
+        return;
     }
+
+    if (command === 'random') {
+        logger.info("userName : " + message.author.username + " ( " + message.author.id + " ) used " + command);
+
+        libgen.random.text(1, (err, data) => {
+            if (err) return err;
+
+            const { title, author, md5 } = data[0];
+            message.reply('Here is a random thingamajig');
+
+            while (n--) {
+                const embed = new MessageEmbed()
+                    .setColor(3447003)
+                    .setAuthor(bot.user.username, bot.user.avatarURL)
+                    .setTitle(`Random Book`)
+                    .addField('Title', title)
+                    .addField('Author', author)
+                    .addField('Download', `${mirror}/book/index.php?md5=` + md5.toLowerCase())
+                    .setTimestamp(new Date())
+                    .setFooter("© LibGenBot", bot.user.avatarURL);
+
+                message.channel.send(embed)
+            }
+        })
+    }
+
+    if (command === 'get') {
+        const options = {
+            mirror: 'http://gen.lib.rus.ec',
+            query: args[0],
+            count: 3,
+            sort_by: 'year',
+            reverse: true
+        }
+        
+        const books = await libgen.search(options);
+
+        for (const [index, book] of books.entries()) {
+            const { title, author, md5 } = book;
+            const link = `${mirror}/book/index.php?md5=${md5.toLowerCase()}`;
+
+            const embed = new MessageEmbed()
+                .setColor(3447003)
+                .setAuthor(bot.user.username, bot.user.avatarURL)
+                .setTitle(`Book #${index + 1}`)
+                .addField('Title', title)
+                .addField('Author', author)
+                .addField('Download', link)
+                .setTimestamp(new Date())
+                .setFooter("© LibGenBot", bot.user.avatarURL);
+
+            message.channel.send(embed)
+        }
     }
 })
